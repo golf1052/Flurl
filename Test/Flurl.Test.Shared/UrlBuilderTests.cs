@@ -224,5 +224,12 @@ namespace Flurl.Test
 		public void IsUrl_false_for_invalid_url() {
 			Assert.IsFalse("www.mysite.com".IsUrl());
 		}
+
+        [Test]
+        public void Try_blank_params() {
+            var url = "http://www.mysite.com".SetQueryParam("test1", "1").SetQueryParam("test2", "").
+                SetQueryParam("test3", "3");
+            Assert.AreEqual("http://www.mysite.com?test1=1&test3=3", url.ToString());
+        }
 	}
 }

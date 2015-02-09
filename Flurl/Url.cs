@@ -115,6 +115,9 @@ namespace Flurl
 			if (name == null)
 				throw new ArgumentNullException("name", "Query parameter name cannot be null.");
 
+            if (value != null && value.GetType() == typeof(string))
+                if (string.IsNullOrEmpty((string)value))
+                    return this;
 			QueryParams[name] = value;
 			return this;
 		}
