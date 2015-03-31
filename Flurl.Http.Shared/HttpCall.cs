@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 
@@ -71,7 +73,12 @@ namespace Flurl.Http
 		/// True if a response with a successful HTTP status was received.
 		/// </summary>
 		public bool Succeeded {
-			get { return Completed && Response.IsSuccessStatusCode; }
+			get {
+				if (!Completed) return false;
+				if (Response.IsSuccessStatusCode) return true;
+				var allowedStatuses = Request.Properties["AllowedHttpStatusRanges"] as IEnumerable<string>;
+				return allowedStatuses != null && allowedStatuses.Any(s => HttpStatusRangeParser.IsMatch(s, Response.StatusCode));
+			}
 		}
 
 		/// <summary>

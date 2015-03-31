@@ -3,18 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Flurl.Http
 {
 	/// <summary>
-	/// A simple container for a Url and an HttpClient, used to enable fluent chaining.
+	/// A chainable wrapper around HttpClient and Flurl.Url.
 	/// </summary>
 	public class FlurlClient : IDisposable
 	{
 		public FlurlClient(Url url, bool autoDispose) {
 			this.Url = url;
 			this.AutoDispose = autoDispose;
+			this.AllowedHttpStatusRanges = new List<string>();
+			if (FlurlHttp.Configuration.AllowedHttpStatusRange != null)
+				this.AllowedHttpStatusRanges.Add(FlurlHttp.Configuration.AllowedHttpStatusRange);
 		}
 
 		public FlurlClient(string url, bool autoDispose) : this(new Url(url), autoDispose) { }
@@ -49,15 +53,16 @@ namespace Flurl.Http
 		}
 
 		/// <summary>
-		/// Encapsulates pattern for making an HTTP call and immediately disposing if AutoDispose is true.
-		/// Primarily used by FlurlClient extension methods, not directly in application code.
+		/// Creates and asynchronously sends an HttpRequestMethod, disposing HttpClient if AutoDispose it true.
+		/// Mainly used to implement higher-level extension methods (GetJsonAsync, etc).
 		/// </summary>
-		/// <typeparam name="T">Type (wrapped in a Task) returned in underlying async HTTP call.</typeparam>
-		/// <param name="func">Underlying async call made against an HttpClient.</param>
-		/// <returns></returns>
-		public async Task<T> DoCallAsync<T>(Func<HttpClient, Task<T>> func) {
+		/// <returns>A Task whose result is the received HttpResponseMessage.</returns>
+		public async Task<HttpResponseMessage> SendAsync(HttpMethod verb, HttpContent content = null, CancellationToken? cancellationToken = null, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead) {
 			try {
-				return await func(HttpClient);
+				var request = new HttpRequestMessage(verb, this.Url) { Content = content };
+				// mechanism for passing ad-hoc data to the MessageHandler
+				request.Properties.Add("AllowedHttpStatusRanges", AllowedHttpStatusRanges);
+				return await HttpClient.SendAsync(request, completionOption, cancellationToken ?? CancellationToken.None);
 			}
 			finally {
 				if (AutoDispose) Dispose();
@@ -76,6 +81,13 @@ namespace Flurl.Http
 				return _httpMessageHandler;
 			}			
 		}
+
+		/// <summary>
+		/// Gets a collection of pattern representing HTTP status codes (or ranges) which, in addition to 2xx, will NOT result in FlurlHttpException being thrown.
+		/// Examples: "3xx", "100,300,600", "100-299,6xx", "*" (allow everything)
+		/// 2xx will never throw regardless of this setting.
+		/// </summary>
+		public ICollection<string> AllowedHttpStatusRanges { get; private set; }
 
 		/// <summary>
 		/// Disposes the underlying HttpClient and HttpMessageHandler, setting both properties to null.
