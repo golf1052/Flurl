@@ -56,7 +56,7 @@ namespace Flurl.Test
 		[Test]
 		public void Combine_works() {
 			var url = Url.Combine("http://www.foo.com/", "/too/", "/many/", "/slashes/", "too", "few", "one/two/");
-			Assert.AreEqual("http://www.foo.com/too/many/slashes/too/few/one/two", url);
+			Assert.AreEqual("http://www.foo.com/too/many/slashes/too/few/one/two/", url);
 		}
 
 		[Test]
@@ -84,7 +84,7 @@ namespace Flurl.Test
 		[Test]
 		public void can_append_multiple_path_segments_by_multi_args() {
 			var url = "http://www.mysite.com".AppendPathSegments("category", "/endpoint/");
-			Assert.AreEqual("http://www.mysite.com/category/endpoint", url.ToString());
+			Assert.AreEqual("http://www.mysite.com/category/endpoint/", url.ToString());
 		}
 
 		[Test]
@@ -214,6 +214,26 @@ namespace Flurl.Test
 			var url = new Url("http://www.mysite.com/more?x=1&y=2");
 			var someMethodThatTakesAString = new Action<string>(s => { });
 			someMethodThatTakesAString(url); // if this compiles, test passed.
+		}
+
+		[Test]
+		public void interprets_plus_as_space() {
+			var url = new Url("http://www.mysite.com/foo+bar?x=1+2");
+			Assert.AreEqual("1 2", url.QueryParams["x"]);
+			// encode + in query string but not path segment
+			Assert.AreEqual("http://www.mysite.com/foo+bar?x=1%202", url.ToString());
+		}
+
+		[Test]
+		public void can_encode_space_as_plus() {
+			var url = new Url("http://www.mysite.com/foo+bar?x=1+2");
+			Assert.AreEqual("http://www.mysite.com/foo+bar?x=1+2", url.ToString(true));
+		}
+
+		[Test]
+		public void encodes_plus() {
+			var url = new Url("http://www.mysite.com").SetQueryParam("x", "1+2");
+			Assert.AreEqual("http://www.mysite.com?x=1%2B2", url.ToString());
 		}
 
 		[Test]
