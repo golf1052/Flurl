@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Flurl.Http;
 using Flurl.Http.Testing;
@@ -112,6 +113,16 @@ namespace Flurl.Test.Http
 				// but then disallow it
 				client.AllowedHttpStatusRanges.Clear();
 				await client.GetAsync();
+			}
+		}
+
+		[Test]
+		public async Task can_allow_specific_http_status() {
+			using (var test = new HttpTest()) {
+				test.RespondWith(404, "Nothing to see here");
+				// allow 404
+				var client = "http://www.api.com".AllowHttpStatus(HttpStatusCode.Conflict, HttpStatusCode.NotFound);
+				await client.DeleteAsync();
 			}
 		}
 	}

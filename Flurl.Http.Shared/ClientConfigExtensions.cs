@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -55,7 +56,7 @@ namespace Flurl.Http
 		/// </summary>
 		/// <param name="action">Action to perform on the HttpClient.</param>
 		/// <returns>The FlurlClient with the modified HttpClient</returns>
-		public static FlurlClient ConfigureHttpClient(this string url, Action<HttpClient> action) {
+		public static FlurlClient ConfigureHttpClient(this Url url, Action<HttpClient> action) {
 			return new FlurlClient(url, true).ConfigureHttpClient(action);
 		}
 
@@ -64,7 +65,7 @@ namespace Flurl.Http
 		/// </summary>
 		/// <param name="action">Action to perform on the HttpClient.</param>
 		/// <returns>The FlurlClient with the modified HttpClient</returns>
-		public static FlurlClient ConfigureHttpClient(this Url url, Action<HttpClient> action) {
+		public static FlurlClient ConfigureHttpClient(this string url, Action<HttpClient> action) {
 			return new FlurlClient(url, true).ConfigureHttpClient(action);
 		}
 
@@ -83,7 +84,7 @@ namespace Flurl.Http
 		/// </summary>
 		/// <param name="timespan">Time to wait before the request times out.</param>
 		/// <returns>The created FlurlClient.</returns>
-		public static FlurlClient WithTimeout(this string url, TimeSpan timespan) {
+		public static FlurlClient WithTimeout(this Url url, TimeSpan timespan) {
 			return new FlurlClient(url, true).WithTimeout(timespan);
 		}
 
@@ -92,7 +93,7 @@ namespace Flurl.Http
 		/// </summary>
 		/// <param name="timespan">Time to wait before the request times out.</param>
 		/// <returns>The created FlurlClient.</returns>
-		public static FlurlClient WithTimeout(this Url url, TimeSpan timespan) {
+		public static FlurlClient WithTimeout(this string url, TimeSpan timespan) {
 			return new FlurlClient(url, true).WithTimeout(timespan);
 		}
 
@@ -110,7 +111,7 @@ namespace Flurl.Http
 		/// </summary>
 		/// <param name="seconds">Number of seconds to wait before the request times out.</param>
 		/// <returns>The created FlurlClient.</returns>
-		public static FlurlClient WithTimeout(this string url, int seconds) {
+		public static FlurlClient WithTimeout(this Url url, int seconds) {
 			return new FlurlClient(url, true).WithTimeout(seconds);
 		}
 
@@ -119,7 +120,7 @@ namespace Flurl.Http
 		/// </summary>
 		/// <param name="seconds">Number of seconds to wait before the request times out.</param>
 		/// <returns>The created FlurlClient.</returns>
-		public static FlurlClient WithTimeout(this Url url, int seconds) {
+		public static FlurlClient WithTimeout(this string url, int seconds) {
 			return new FlurlClient(url, true).WithTimeout(seconds);
 		}
 
@@ -141,7 +142,7 @@ namespace Flurl.Http
 		/// <param name="name">HTTP header name.</param>
 		/// <param name="value">HTTP header value.</param>
 		/// <returns>The modified FlurlClient.</returns>
-		public static FlurlClient WithHeader(this string url, string name, object value) {
+		public static FlurlClient WithHeader(this Url url, string name, object value) {
 			return new FlurlClient(url, true).WithHeader(name, value);
 		}
 
@@ -151,7 +152,7 @@ namespace Flurl.Http
 		/// <param name="name">HTTP header name.</param>
 		/// <param name="value">HTTP header value.</param>
 		/// <returns>The modified FlurlClient.</returns>
-		public static FlurlClient WithHeader(this Url url, string name, object value) {
+		public static FlurlClient WithHeader(this string url, string name, object value) {
 			return new FlurlClient(url, true).WithHeader(name, value);
 		}
 
@@ -279,6 +280,34 @@ namespace Flurl.Http
 		/// <returns>The new FlurlClient.</returns>
 		public static FlurlClient AllowHttpStatus(this string url, string pattern) {
 			return new FlurlClient(url, true).AllowHttpStatus(pattern);
+		}
+
+		/// <summary>
+		/// Adds an <see cref="HttpStatusCode"/> which (in addtion to 2xx) will NOT result in a FlurlHttpException being thrown.
+		/// </summary>
+		/// <param name="statusCodes">Examples: HttpStatusCode.NotFound</param>
+		/// <returns>The modified FlurlClient.</returns>
+		public static FlurlClient AllowHttpStatus(this FlurlClient client, params HttpStatusCode[] statusCodes) {
+			var pattern = string.Join(",", statusCodes.Select(c => (int)c));
+			return AllowHttpStatus(client, pattern);
+		}
+
+		/// <summary>
+		/// Adds an <see cref="HttpStatusCode"/> which (in addtion to 2xx) will NOT result in a FlurlHttpException being thrown.
+		/// </summary>
+		/// <param name="statusCodes">Examples: HttpStatusCode.NotFound</param>
+		/// <returns>The new FlurlClient.</returns>
+		public static FlurlClient AllowHttpStatus(this Url url, params HttpStatusCode[] statusCodes) {
+			return new FlurlClient(url, true).AllowHttpStatus(statusCodes);
+		}
+
+		/// <summary>
+		/// Adds an <see cref="HttpStatusCode"/> which (in addtion to 2xx) will NOT result in a FlurlHttpException being thrown.
+		/// </summary>
+		/// <param name="statusCodes">Examples: HttpStatusCode.NotFound</param>
+		/// <returns>The new FlurlClient.</returns>
+		public static FlurlClient AllowHttpStatus(this string url, params HttpStatusCode[] statusCodes) {
+			return new FlurlClient(url, true).AllowHttpStatus(statusCodes);
 		}
 
 		/// <summary>

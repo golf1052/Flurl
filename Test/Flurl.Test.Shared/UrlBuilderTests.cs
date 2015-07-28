@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using NUnit.Framework;
 
 namespace Flurl.Test
@@ -23,15 +25,6 @@ namespace Flurl.Test
 					Assert.Fail("No equivalent string extension method found for Url.{0}", method.Name);
 				}
 			}
-		}
-
-		[Test]
-		public void Should_Accept_QueryString_Without_ValuePair()
-		{
-			var url = new Url("http://example.com?123456");
-			Assert.AreEqual("http://example.com", url.Path);
-			Assert.AreEqual(1, url.QueryParams.Keys.Count);
-			Assert.AreEqual(string.Empty, url.QueryParams["123456"]);
 		}
 
 		[Test]
@@ -98,6 +91,14 @@ namespace Flurl.Test
 		public void can_add_query_param() {
 			var url = "http://www.mysite.com".SetQueryParam("x", 1);
 			Assert.AreEqual("http://www.mysite.com?x=1", url.ToString());
+		}
+
+		[Test]
+		public void can_add_query_param_without_value() {
+			var url = new Url("http://example.com?123456");
+			Assert.AreEqual("http://example.com", url.Path);
+			Assert.AreEqual(1, url.QueryParams.Keys.Count);
+			Assert.AreEqual(string.Empty, url.QueryParams["123456"]);
 		}
 
 		[Test]
@@ -168,6 +169,13 @@ namespace Flurl.Test
 		public void removing_nonexisting_query_params_is_ignored() {
 			var url = "http://www.mysite.com/more".RemoveQueryParams("x", "y");
 			Assert.AreEqual("http://www.mysite.com/more", url.ToString());
+		}
+
+		[Test]
+		public void url_ToString_uses_invariant_culture() {
+			Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("es-ES");
+			var url = "http://www.mysite.com".SetQueryParam("x", 1.1);
+			Assert.AreEqual("http://www.mysite.com?x=1.1", url.ToString());
 		}
 
 		[Test]
