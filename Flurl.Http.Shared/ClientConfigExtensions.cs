@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using Flurl.Http.Configuration;
 using Flurl.Util;
 
 namespace Flurl.Http
@@ -39,6 +40,34 @@ namespace Flurl.Http
 		public static FlurlClient WithUrl(this FlurlClient client, Url url) {
 			client.Url = url;
 			return client;
+		}
+
+		/// <summary>
+		/// Change FlurlHttpSettings for this client instance.
+		/// </summary>
+		/// <param name="action">Action defining the settings changes.</param>
+		/// <returns>The FlurlClient with the modified HttpClient</returns>
+		public static FlurlClient ConfigureClient(this FlurlClient client, Action<FlurlHttpSettings> action) {
+			action(client.Settings);
+			return client;
+		}
+
+		/// <summary>
+		/// Creates a FlurlClient from the URL and allows changing the FlurlHttpSettings associated with the instance.
+		/// </summary>
+		/// <param name="action">Action defining the settings changes.</param>
+		/// <returns>The FlurlClient with the modified HttpClient</returns>
+		public static FlurlClient ConfigureClient(this Url url, Action<FlurlHttpSettings> action) {
+			return new FlurlClient(url, true).ConfigureClient(action);
+		}
+
+		/// <summary>
+		/// Creates a FlurlClient from the URL and allows changing the FlurlHttpSettings associated with the instance.
+		/// </summary>
+		/// <param name="action">Action defining the settings changes.</param>
+		/// <returns>The FlurlClient with the modified HttpClient</returns>
+		public static FlurlClient ConfigureClient(this string url, Action<FlurlHttpSettings> action) {
+			return new FlurlClient(url, true).ConfigureClient(action);
 		}
 
 		/// <summary>
@@ -260,7 +289,13 @@ namespace Flurl.Http
 		/// <param name="pattern">Examples: "3xx", "100,300,600", "100-299,6xx"</param>
 		/// <returns>The modified FlurlClient.</returns>
 		public static FlurlClient AllowHttpStatus(this FlurlClient client, string pattern) {
-			client.AllowedHttpStatusRanges.Add(pattern);
+			if (!string.IsNullOrWhiteSpace(pattern)) {
+				var current = client.Settings.AllowedHttpStatusRange;
+				if (string.IsNullOrWhiteSpace(current))
+					client.Settings.AllowedHttpStatusRange = pattern;
+				else
+					client.Settings.AllowedHttpStatusRange += "," + pattern;
+			}
 			return client;
 		}
 
@@ -315,8 +350,7 @@ namespace Flurl.Http
 		/// </summary>
 		/// <returns>The modified FlurlClient.</returns>
 		public static FlurlClient AllowAnyHttpStatus(this FlurlClient client) {
-			client.AllowedHttpStatusRanges.Clear();
-			client.AllowedHttpStatusRanges.Add("*");
+			client.Settings.AllowedHttpStatusRange = "*";
 			return client;
 		}
 
